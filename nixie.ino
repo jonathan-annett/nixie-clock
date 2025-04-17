@@ -91,9 +91,16 @@ TFT_eSPI tft = TFT_eSPI();
 
 int currentDigit;
 
+unsigned long millisSync = 0;
+
 void cylonLeds() {
-  
-  unsigned mask =  1 << (lastSec % 10) ;
+
+  struct timeval now;
+  gettimeofday(&now, nullptr);
+
+  unsigned xxx =  now.tv_usec / 100000;
+
+  unsigned mask =  1 << (xxx % 10) ;
 
   if ( (cylonPos [ useDigitMode ] & mask )== 0 ) {
      FastLED.show(0);
