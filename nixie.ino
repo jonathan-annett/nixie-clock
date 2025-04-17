@@ -132,6 +132,7 @@ void checkForOTAUpdate() {
 
 
 void doFirmwareUpdate() {
+  static uint8_t hue = 0;
   HTTPClient http;
 
   uint8_t buffer [512];
@@ -154,13 +155,16 @@ void doFirmwareUpdate() {
     if (Update.begin(contentLength)) {
 
       while (remain > 0) {
+        leds = CHSV(hue++, 0XFF, 100);
+        FastLED.show();
 
         size_t toRead =  remain > sizeof buffer ? sizeof buffer : remain;
         size_t avail = str.available();
   
         while (avail == 0) {
-          delay (10);
-       //   Serial.printf("avail %d\n",avail);
+          delay (1);
+          leds = CHSV(hue++, 0XFF, 100);
+          FastLED.show();
           avail = str.available();
         }
   
