@@ -98,7 +98,7 @@ void cylonLeds() {
   struct timeval now;
   gettimeofday(&now, nullptr);
 
-  unsigned xxx =  now.tv_usec / 100000;
+  unsigned long xxx =  now.tv_usec / 2000;
 
   unsigned mask =  1 << (xxx % 10) ;
 
