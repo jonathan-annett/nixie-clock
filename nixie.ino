@@ -40,8 +40,8 @@ String firmwareVersion = FIRMWARE_VERSION;  // current firmware version
 String firmwareVersion = "v1.0.0";  // current firmware version
 #endif
 
-const char* versionURL  = "https://raw.githubusercontent.com/jonathan-annett/nixie-clock/refs/heads/main/firmware/version.txt";
-const char* firmwareURL = "https://raw.githubusercontent.com/jonathan-annett/nixie-clock/refs/heads/main/firmware/firmware.bin";
+const char * versionURL  = "https://github.com/jonathan-annett/nixie-clock/releases/latest/download/version.txt";
+const char * firmwareURL = "https://github.com/jonathan-annett/nixie-clock/releases/latest/download/firmware.bin";
 
 //#define MAX_SYNC_MILLIS (1000 * 60 * 60 * 2)
 const unsigned long MAX_SYNC_MILLIS [ 6 ] = {
