@@ -5,11 +5,13 @@
 #include <SD.h>
 #include <ArduinoJson.h>
 #include <WiFi.h>
+#include <HTTPClient.h>
 #include <Preferences.h>
+#include <Update.h>
 #include "time.h"
 #include "nixies.h"
 #include "pin_config.h"
-#include <FastLED.h> // https://github.com/FastLED/FastLED
+//#include <FastLED.h> // https://github.com/FastLED/FastLED
 #include "TFT_eSPI.h" // https://github.com/Bodmer/TFT_eSPI
 
 
@@ -30,13 +32,13 @@
 #endif
 
 #ifdef FIRMWARE_VERSION
-const char* firmwareVersion = FIRMWARE_VERSION;  // current firmware version
+String firmwareVersion = FIRMWARE_VERSION;  // current firmware version
 #else
-const char* firmwareVersion = "v1.0.0";  // current firmware version
+String firmwareVersion = "v1.0.0";  // current firmware version
 #endif
 
-const char* versionURL  = "https://your.server.com/firmware/version.txt";
-const char* firmwareURL = "https://your.server.com/firmware/firmware.bin";
+const char* versionURL  = "https://raw.githubusercontent.com/jonathan-annett/nixie-clock/refs/heads/main/firmware/version.txt";
+const char* firmwareURL = "https://raw.githubusercontent.com/jonathan-annett/nixie-clock/refs/heads/main/firmware/firmware.bin";
 
 //#define MAX_SYNC_MILLIS (1000 * 60 * 60 * 2)
 const unsigned long MAX_SYNC_MILLIS [ 6 ] = {
@@ -78,13 +80,123 @@ unsigned lastSync ;
 int lastSec = -1;
 struct tm timeinfo;
 
-CRGB leds;
+//CRGB leds;
 
 Preferences preferences;
 
 TFT_eSPI tft = TFT_eSPI();
 
 int currentDigit;
+
+
+
+void checkForOTAUpdate() {
+  HTTPClient http;
+  http.begin(versionURL);
+  int httpCode = http.GET();
+
+  Serial.printf("Installed version: %s\n", firmwareVersion.c_str());
+
+  if (httpCode == 200) {
+    String remoteVersion = http.getString();
+    remoteVersion.trim();
+
+    
+    Serial.printf("Remote version: %s\n", remoteVersion.c_str());
+
+    if (remoteVersion.compareTo( firmwareVersion ) != 0 ) {
+      Serial.println("New version found, starting OTA update...");
+      doFirmwareUpdate();
+    } else {
+      Serial.println("Firmware is up to date.");
+    }
+  } else {
+    Serial.printf("Failed to check version, HTTP code: %d\n", httpCode);
+  }
+  http.end();
+}
+
+
+void doFirmwareUpdate() {
+  HTTPClient http;
+
+  uint8_t buffer [512];
+
+  http.begin(firmwareURL);
+  int httpCode = http.GET();
+
+  if (httpCode == 200) {
+    size_t contentLength = http.getSize();
+
+    Serial.printf("HTTP Content-Length = %d\n", contentLength);
+    size_t remain = contentLength;
+
+    WiFiClient &str = http.getStream();
+
+  
+    Serial.printf("Update Starting (%u bytes)\n",contentLength);
+
+ 
+    if (Update.begin(contentLength)) {
+
+      while (remain > 0) {
+
+        size_t toRead =  remain > sizeof buffer ? sizeof buffer : remain;
+        size_t avail = str.available();
+  
+        while (avail == 0) {
+          delay (10);
+          Serial.printf("avail %d\n",avail);
+          avail = str.available();
+        }
+  
+        size_t didRead = str.read(buffer,toRead);
+        Serial.printf("did read = %d, remain = %d\n", didRead, remain);
+
+        if (didRead>0) {
+
+          size_t didWrite = Update.write(buffer,didRead);
+
+          if (Update.hasError()) {
+            Serial.printf("Update error after write: %s\n", Update.errorString());
+            break;
+          }
+
+
+          Serial.printf("did write = %d \n", didWrite);
+          if ( didRead ==  didWrite) {
+            remain -= didRead;      
+
+          } else {
+            Serial.println("(error?)");
+            break; 
+          }
+        }
+
+      }
+  
+      
+      if (remain == 0) {
+        if (Update.end()) {
+          ESP.restart();
+        } else {
+          Serial.printf("Update error: %s\n", Update.errorString());
+        }
+      } else {
+        Serial.printf("aborting update, with %d bytes left unprocessed\n", remain);
+        Update.abort();
+      }
+          
+    } else {
+      Serial.println("Update failed: insufficient space");
+    }
+  } else {
+    Serial.printf("Firmware download failed: %d\n", httpCode);
+  }
+  http.end();
+}
+
+
 
 void savePrefs() {
   preferences.begin("clock", false);
@@ -128,6 +240,8 @@ void loadPrefs() {
 }
 
 void getSettings(void) {
+
+  Serial.println("Attempting Card Mount...");
   SD_MMC.setPins(SD_MMC_CLK_PIN, SD_MMC_CMD_PIN, SD_MMC_D0_PIN, SD_MMC_D1_PIN, SD_MMC_D2_PIN, SD_MMC_D3_PIN);
   if (!SD_MMC.begin()) {
     Serial.println("Card Mount Failed");
@@ -220,10 +334,14 @@ void setup() {
 
   Serial.begin(115200);
 
+  
   getSettings(); 
   if (useLeds) {
-      FastLED.addLeds<APA102, LED_DI_PIN, LED_CI_PIN, BGR>(&leds, 1);
+   //   FastLED.addLeds<APA102, LED_DI_PIN, LED_CI_PIN, BGR>(&leds, 1);
   }
+    
+  delay(5000);
+
   Serial.printf("Connecting to %s ", savedSSID);
   WiFi.begin(savedSSID.c_str(), savedPass.c_str());
 
@@ -232,6 +350,8 @@ void setup() {
       Serial.print(".");
   }
   Serial.println(" CONNECTED");
+
+  checkForOTAUpdate();
   
   //init and get the time
   configTime(gmtOffset_sec, daylightOffset_sec, ntpServer.c_str() );
@@ -298,9 +418,9 @@ void loop() { // Put your main code here, to run repeatedly:
     } else {
       delay(1);
       if (useLeds) {
-        leds = CHSV(hue++, 0XFF, 100);
+     //   leds = CHSV(hue++, 0XFF, 100);
 
-        FastLED.show();
+    //    FastLED.show();
       }
     }
 
