@@ -100,7 +100,7 @@ void cylonLeds() {
 
   unsigned long xxx =  now.tv_usec / 100000;
   
-  printf("tv_usec = %u, tv_usec=%u, xxx= %u\n",now.tv_sec,now.tv_usec,xxx);
+  //printf("tv_usec = %u, tv_usec=%u, xxx= %u\n",now.tv_sec,now.tv_usec,xxx);
 
   if (xxx == millisSync) return;
 
@@ -127,11 +127,12 @@ void checkForOTAUpdate() {
   sprintf(url,"%s?%u",versionURL,r);
 
   Serial.printf("Hitting url: %s\n", url);
-
+  http.setFollowRedirects(HTTPC_STRICT_FOLLOW_REDIRECTS); 
   http.begin(url);
   int httpCode = http.GET();
 
   Serial.printf("Installed version: %s\n", firmwareVersion.c_str());
+  
 
   if (httpCode == 200) {
     String remoteVersion = http.getString();
@@ -158,7 +159,7 @@ void doFirmwareUpdate() {
   HTTPClient http;
 
   uint8_t buffer [512];
-
+  http.setFollowRedirects(HTTPC_STRICT_FOLLOW_REDIRECTS); 
   http.begin(firmwareURL);
   int httpCode = http.GET();
 
