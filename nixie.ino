@@ -14,7 +14,7 @@
 
 #include "bootloader_random.h"
 
-#include <FastLED.h> // https://github.com/FastLED/FastLED
+#include <FastLED.h>  // https://github.com/FastLED/FastLED
 #include "TFT_eSPI.h" // https://github.com/Bodmer/TFT_eSPI
 
 
@@ -23,12 +23,12 @@
 #define SD_SCLK         12
 #define SD_CS           16
 
-#define DIGIT_10H 5
-#define DIGIT_HOUR 4
+#define DIGIT_10H   5
+#define DIGIT_HOUR  4
 #define DIGIT_10MIN 3
-#define DIGIT_MIN 2
+#define DIGIT_MIN   2
 #define DIGIT_10SEC 1
-#define DIGIT_SEC 0
+#define DIGIT_SEC   0
 
 #ifndef DIGIT_MODE
 #define DIGIT_MODE DIGIT_10H
