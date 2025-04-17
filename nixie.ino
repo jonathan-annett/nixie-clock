@@ -100,6 +100,10 @@ void cylonLeds() {
 
   unsigned long xxx =  now.tv_usec / 2000;
 
+  if (xxx == millisSync) return;
+
+  millisSync = xxx;
+
   unsigned mask =  1 << (xxx % 10) ;
 
   if ( (cylonPos [ useDigitMode ] & mask )== 0 ) {
@@ -332,10 +336,12 @@ int getDigit() {
       return -1;
     }
 
+    cylonLeds();
+    
     if (lastSec!=timeinfo.tm_sec ) {
       lastSec = timeinfo.tm_sec;
       printLocalTime(); 
-      cylonLeds();
+     
     }
 
    switch ( useDigitMode ) {
