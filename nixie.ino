@@ -98,7 +98,9 @@ void cylonLeds() {
   struct timeval now;
   gettimeofday(&now, nullptr);
 
-  unsigned long xxx =  now.tv_usec / 2000;
+  unsigned long xxx =  now.tv_usec / 100000;
+  
+  printf("tv_usec = %u, tv_usec=%u, xxx= %u\n",now.tv_sec,now.tv_usec,xxx);
 
   if (xxx == millisSync) return;
 
@@ -459,7 +461,7 @@ void loop() { // Put your main code here, to run repeatedly:
   while( currentDigit == nextDigit ) {
  
     cylonLeds();
-    
+
     if ( millis() - lastSync >  MAX_SYNC_MILLIS [ useDigitMode ] ) {
       resync();
     } else {
