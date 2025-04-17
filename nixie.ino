@@ -124,9 +124,23 @@ void checkForOTAUpdate() {
   
   if (lastFirmwareCheck > 0) {
 
-    if (millis() < lastFirmwareCheck + FW_RECHECK) {
+    long remaining =  (lastFirmwareCheck + FW_RECHECK ) - millis();
+
+    if (remaining > 0 ) {
        return;
     }
+  }
+
+  bool isOffline = WiFi.status() != WL_CONNECTED;
+  if ( isOffline ) {
+    Serial.printf("Connecting to %s ", savedSSID);
+    WiFi.begin(savedSSID.c_str(), savedPass.c_str());
+
+    while (WiFi.status() != WL_CONNECTED) {
+        delay(500);
+        Serial.print(".");
+    }
+    Serial.println(" CONNECTED");
   }
 
   HTTPClient http;
@@ -164,6 +178,10 @@ void checkForOTAUpdate() {
   }
   http.end();
   lastFirmwareCheck = millis();
+  if ( isOffline ) {
+    WiFi.disconnect(true);
+    WiFi.mode(WIFI_OFF);
+  }
 }
 
 void doFirmwareUpdate() {
@@ -302,38 +320,6 @@ void getSettings(void) {
   }
   
   delay (5000);
-
-  File versionFile = SD_MMC.open("/version.txt");
-  if (versionFile) {
-    String ver = versionFile.readString();
-
-   
-    versionFile.close();
-    if (ver.compareTo(firmwareVersion)!=0) {
-      Serial.printf("version.txt on sdcard = %s",ver.c_str());
-      File firmwareFile = SD_MMC.open("/firmware.bin");
-      if (firmwareFile) {
-        Serial.println("Starting update using firmware.bin on sdcard");
-        size_t bytes =  firmwareFile.size();
-        if (Update.begin( bytes ) ) {
-           if (bytes == Update.writeStream (firmwareFile)) {
-              firmwareFile.close();
-              Update.end();
-              ESP.restart();
-           } else {
-            Update.abort();
-            firmwareFile.close();
-            Serial.println("Failed to update");
-           }
-        }
-
-        firmwareFile.close();
-      }
-    }
-    loadPrefs();
-    return;
-  }
-  
 
   File file = SD_MMC.open("/config.json");
   if (!file) {
@@ -498,12 +484,14 @@ void resync () {
 
 void loop() { // Put your main code here, to run repeatedly:
   cylonLeds();
+  checkForOTAUpdate();
   int nextDigit = getDigit() ;
   static uint8_t hue = 0;
 
   while( currentDigit == nextDigit ) {
  
     cylonLeds();
+    checkForOTAUpdate();
 
     if ( millis() - lastSync >  MAX_SYNC_MILLIS [ useDigitMode ] ) {
       resync();
