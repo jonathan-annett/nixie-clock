@@ -442,6 +442,8 @@ void loop() { // Put your main code here, to run repeatedly:
         leds = CHSV(hue++, 0XFF, 100);
 
         FastLED.show();
+      } else {
+        FastLED.show(0);
       }
     }
 
