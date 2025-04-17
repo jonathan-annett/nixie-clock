@@ -83,7 +83,9 @@ unsigned lastSync ;
 int lastSec = -1;
 struct tm timeinfo;
 
-CRGB leds;
+#define NUM_LEDS 1
+
+CRGB leds[NUM_LEDS];
 
 Preferences preferences;
 
@@ -132,7 +134,7 @@ void checkForOTAUpdate() {
 
 
 void doFirmwareUpdate() {
-  static uint8_t hue = 0;
+   
   HTTPClient http;
 
   uint8_t buffer [512];
@@ -155,7 +157,11 @@ void doFirmwareUpdate() {
     if (Update.begin(contentLength)) {
 
       while (remain > 0) {
-        leds = CHSV(hue++, 0XFF, 100);
+        if (leds[0] == CRGB::Black) {
+          leds[0] = CRGB::Red;
+        } else {
+          leds[0] = CRGB::Black;
+        }
         FastLED.show();
 
         size_t toRead =  remain > sizeof buffer ? sizeof buffer : remain;
@@ -163,7 +169,11 @@ void doFirmwareUpdate() {
   
         while (avail == 0) {
           delay (1);
-          leds = CHSV(hue++, 0XFF, 100);
+          if (leds[0] == CRGB::Black) {
+            leds[0] = CRGB::Red;
+          } else {
+            leds[0] = CRGB::Black;
+          }
           FastLED.show();
           avail = str.available();
         }
@@ -356,12 +366,12 @@ void setup() {
 
   Serial.begin(115200);
 
-  if (useLeds) {
-    FastLED.addLeds<APA102, LED_DI_PIN, LED_CI_PIN, BGR>(&leds, 1);
-    leds = CHSV(0, 0XFF, 100);
-    FastLED.show();
-}
   
+    FastLED.addLeds<APA102, LED_DI_PIN, LED_CI_PIN, BGR>(leds, 1);
+    leds[0] = CRGB::Red;
+    FastLED.show();
+ 
+    
 
   getSettings(); 
 
@@ -433,7 +443,7 @@ void resync () {
 
 void loop() { // Put your main code here, to run repeatedly:
   int nextDigit = getDigit() ;
-  static uint8_t hue = 0;
+  
 
   while( currentDigit == nextDigit ) {
  
@@ -443,11 +453,16 @@ void loop() { // Put your main code here, to run repeatedly:
     } else {
       delay(1);
       if (useLeds) {
-        leds = CHSV(hue++, 0XFF, 100);
+        if (leds[0] == CRGB::Black) {
+          leds[0] = CRGB::Red;
+        } else {
+          leds[0] = CRGB::Black;
+        }
 
         FastLED.show();
       } else {
-        FastLED.show(0);
+        leds[0] = CRGB::Black;
+        FastLED.show();
       }
     }
 
