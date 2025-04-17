@@ -336,8 +336,8 @@ int getDigit() {
       return -1;
     }
 
-    cylonLeds();
-    
+   
+
     if (lastSec!=timeinfo.tm_sec ) {
       lastSec = timeinfo.tm_sec;
       printLocalTime(); 
@@ -454,6 +454,7 @@ void resync () {
 }
 
 void loop() { // Put your main code here, to run repeatedly:
+  cylonLeds();
   int nextDigit = getDigit() ;
   static uint8_t hue = 0;
 
