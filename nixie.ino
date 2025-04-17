@@ -336,8 +336,6 @@ int getDigit() {
       return -1;
     }
 
-   
-
     if (lastSec!=timeinfo.tm_sec ) {
       lastSec = timeinfo.tm_sec;
       printLocalTime(); 
@@ -460,7 +458,8 @@ void loop() { // Put your main code here, to run repeatedly:
 
   while( currentDigit == nextDigit ) {
  
-
+    cylonLeds();
+    
     if ( millis() - lastSync >  MAX_SYNC_MILLIS [ useDigitMode ] ) {
       resync();
     } else {
