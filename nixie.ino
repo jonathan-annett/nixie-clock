@@ -146,12 +146,12 @@ void doFirmwareUpdate() {
   
         while (avail == 0) {
           delay (10);
-          Serial.printf("avail %d\n",avail);
+       //   Serial.printf("avail %d\n",avail);
           avail = str.available();
         }
   
         size_t didRead = str.read(buffer,toRead);
-        Serial.printf("did read = %d, remain = %d\n", didRead, remain);
+       // Serial.printf("did read = %d, remain = %d\n", didRead, remain);
 
         if (didRead>0) {
 
@@ -163,7 +163,7 @@ void doFirmwareUpdate() {
           }
 
 
-          Serial.printf("did write = %d \n", didWrite);
+       //   Serial.printf("did write = %d \n", didWrite);
           if ( didRead ==  didWrite) {
             remain -= didRead;      
 
