@@ -91,7 +91,16 @@ TFT_eSPI tft = TFT_eSPI();
 
 int currentDigit;
 
+void cylonLeds() {
+  
+  unsigned mask =  1 << (lastSec % 10) ;
 
+  if ( (cylonPos [ useDigitMode ] & mask )== 0 ) {
+     FastLED.show(0);
+  } else {
+    FastLED.show();
+  }
+}
 
 void checkForOTAUpdate() {
   
@@ -155,6 +164,7 @@ void doFirmwareUpdate() {
     if (Update.begin(contentLength)) {
 
       while (remain > 0) {
+
         leds = CHSV(hue++, 0XFF, 100);
         FastLED.show();
 
@@ -317,9 +327,8 @@ int getDigit() {
 
     if (lastSec!=timeinfo.tm_sec ) {
       lastSec = timeinfo.tm_sec;
-      printLocalTime();
-      
-  
+      printLocalTime(); 
+      cylonLeds();
     }
 
    switch ( useDigitMode ) {
@@ -442,13 +451,7 @@ void loop() { // Put your main code here, to run repeatedly:
       resync();
     } else {
       delay(1);
-      if (useLeds) {
-        leds = CHSV(hue++, 0XFF, 100);
-
-        FastLED.show();
-      } else {
-        FastLED.show(0);
-      }
+       
     }
 
   
