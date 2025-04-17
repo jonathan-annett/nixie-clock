@@ -1,1 +1,1 @@
-#define FIRMWARE_VERSION "v1.2.6"
+#define FIRMWARE_VERSION "v1.2.7"

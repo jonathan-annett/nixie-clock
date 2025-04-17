@@ -14,7 +14,7 @@
 
 #include "bootloader_random.h"
 
-//#include <FastLED.h> // https://github.com/FastLED/FastLED
+#include <FastLED.h> // https://github.com/FastLED/FastLED
 #include "TFT_eSPI.h" // https://github.com/Bodmer/TFT_eSPI
 
 
@@ -83,7 +83,7 @@ unsigned lastSync ;
 int lastSec = -1;
 struct tm timeinfo;
 
-//CRGB leds;
+CRGB leds;
 
 Preferences preferences;
 
@@ -262,6 +262,8 @@ void getSettings(void) {
     loadPrefs(); 
     return;
   }
+  
+  delay (5000);
 
   File file = SD_MMC.open("/config.json");
   if (!file) {
@@ -269,6 +271,8 @@ void getSettings(void) {
     loadPrefs();
     return;
   }
+
+  delay (5000);
 
   StaticJsonDocument<512> doc;
   DeserializationError error = deserializeJson(doc, file);
@@ -348,12 +352,15 @@ void setup() {
 
   Serial.begin(115200);
 
-  
-  getSettings(); 
   if (useLeds) {
-   //   FastLED.addLeds<APA102, LED_DI_PIN, LED_CI_PIN, BGR>(&leds, 1);
-  }
-    
+    FastLED.addLeds<APA102, LED_DI_PIN, LED_CI_PIN, BGR>(&leds, 1);
+    leds = CHSV(0, 0XFF, 100);
+    FastLED.show();
+}
+  
+
+  getSettings(); 
+
   delay(5000);
 
   Serial.printf("Connecting to %s ", savedSSID);
@@ -432,9 +439,9 @@ void loop() { // Put your main code here, to run repeatedly:
     } else {
       delay(1);
       if (useLeds) {
-     //   leds = CHSV(hue++, 0XFF, 100);
+        leds = CHSV(hue++, 0XFF, 100);
 
-    //    FastLED.show();
+        FastLED.show();
       }
     }
 

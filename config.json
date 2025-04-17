@@ -4,11 +4,11 @@
      "password": "--super-secret-psk--"
    },
    "settings": {
-     "digit": 0,
+     "digit": 5,
      "ntp-server" :  "pool.ntp.org",
      "tz-offset" : 36000,
      "daylight-offset": 0,
-     "useLeds":true
+     "useLeds":false
    }
  }
  
