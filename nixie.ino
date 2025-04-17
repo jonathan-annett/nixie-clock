@@ -43,8 +43,7 @@ String firmwareVersion = "v1.0.0";  // current firmware version
 const char * versionURL  = "https://github.com/jonathan-annett/nixie-clock/releases/latest/download/version.txt";
 const char * firmwareURL = "https://github.com/jonathan-annett/nixie-clock/releases/latest/download/firmware.bin";
 
-//#define FW_RECHECK (24 * 60 * 60 * 1000) 
-#define FW_RECHECK (5 * 60 * 1000) 
+#define FW_RECHECK (24 * 60 * 60 * 1000) 
 
 //#define MAX_SYNC_MILLIS (1000 * 60 * 60 * 2)
 const unsigned long MAX_SYNC_MILLIS [ 6 ] = {
