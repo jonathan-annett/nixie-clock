@@ -11,6 +11,9 @@
 #include "time.h"
 #include "nixies.h"
 #include "pin_config.h"
+
+#include "bootloader_random.h"
+
 //#include <FastLED.h> // https://github.com/FastLED/FastLED
 #include "TFT_eSPI.h" // https://github.com/Bodmer/TFT_eSPI
 
@@ -91,8 +94,19 @@ int currentDigit;
 
 
 void checkForOTAUpdate() {
+  
   HTTPClient http;
-  http.begin(versionURL);
+  u16_t r;
+
+
+  char url [256];
+  bootloader_random_enable();
+  bootloader_fill_random(&r, sizeof(r));
+  sprintf(url,"%s?%u",versionURL,r);
+
+  Serial.printf("Hitting url: %s\n", url);
+
+  http.begin(url);
   int httpCode = http.GET();
 
   Serial.printf("Installed version: %s\n", firmwareVersion.c_str());
