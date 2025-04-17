@@ -43,6 +43,9 @@ String firmwareVersion = "v1.0.0";  // current firmware version
 const char * versionURL  = "https://github.com/jonathan-annett/nixie-clock/releases/latest/download/version.txt";
 const char * firmwareURL = "https://github.com/jonathan-annett/nixie-clock/releases/latest/download/firmware.bin";
 
+//#define FW_RECHECK (24 * 60 * 60 * 1000) 
+#define FW_RECHECK (5 * 60 * 1000) 
+
 //#define MAX_SYNC_MILLIS (1000 * 60 * 60 * 2)
 const unsigned long MAX_SYNC_MILLIS [ 6 ] = {
 
@@ -79,6 +82,8 @@ String ntpServer = "pool.ntp.org";
  bool useLeds = true;
 
 unsigned lastSync ;
+
+unsigned lastFirmwareCheck = 0;
 
 int lastSec = -1;
 struct tm timeinfo;
@@ -117,6 +122,13 @@ void cylonLeds() {
 
 void checkForOTAUpdate() {
   
+  if (lastFirmwareCheck) {
+
+    if (millis() < lastFirmwareCheck + FW_RECHECK) {
+       return;
+    }
+  }
+
   HTTPClient http;
   u16_t r;
 
@@ -151,8 +163,8 @@ void checkForOTAUpdate() {
     Serial.printf("Failed to check version, HTTP code: %d\n", httpCode);
   }
   http.end();
+  lastFirmwareCheck = millis();
 }
-
 
 void doFirmwareUpdate() {
   static uint8_t hue = 0;
@@ -238,8 +250,6 @@ void doFirmwareUpdate() {
   http.end();
 }
 
-
-
 void savePrefs() {
   preferences.begin("clock", false);
   preferences.putString("ssid",savedSSID);
@@ -247,7 +257,7 @@ void savePrefs() {
   preferences.putInt("digit",useDigitMode);
   preferences.putLong("tz-offset",gmtOffset_sec);
   preferences.putInt("daylight-offset",daylightOffset_sec);
-  preferences.putBool("useLeds",useLeds);
+  preferences.putBool("cylon",useLeds);
   preferences.putString("ntp-server",ntpServer);
   preferences.end(); 
 
@@ -266,7 +276,7 @@ void loadPrefs() {
   savedPass = preferences.getString("pass",savedPass);
   ntpServer = preferences.getString("ntp-server",ntpServer);
   useDigitMode =  preferences.getInt("digit",useDigitMode);
-  useLeds      =  preferences.getBool("useLeds",useLeds);
+  useLeds      =  preferences.getBool("cylon",useLeds);
 
   gmtOffset_sec = preferences.getLong("tz-offset",gmtOffset_sec);
   daylightOffset_sec = preferences.getInt("daylight-offset",daylightOffset_sec);
@@ -292,6 +302,38 @@ void getSettings(void) {
   }
   
   delay (5000);
+
+  File versionFile = SD_MMC.open("/version.txt");
+  if (versionFile) {
+    String ver = versionFile.readString();
+
+   
+    versionFile.close();
+    if (ver.compareTo(firmwareVersion)!=0) {
+      Serial.printf("version.txt on sdcard = %s",ver.c_str());
+      File firmwareFile = SD_MMC.open("/firmware.bin");
+      if (firmwareFile) {
+        Serial.println("Starting update using firmware.bin on sdcard");
+        size_t bytes =  firmwareFile.size();
+        if (Update.begin( bytes ) ) {
+           if (bytes == Update.writeStream (firmwareFile)) {
+              firmwareFile.close();
+              Update.end();
+              ESP.restart();
+           } else {
+            Update.abort();
+            firmwareFile.close();
+            Serial.println("Failed to update");
+           }
+        }
+
+        firmwareFile.close();
+      }
+    }
+    loadPrefs();
+    return;
+  }
+  
 
   File file = SD_MMC.open("/config.json");
   if (!file) {
@@ -322,7 +364,7 @@ void getSettings(void) {
 
   useDigitMode = doc["settings"]["digit"];
 
-  useLeds = doc["settings"]["useLeds"];
+  useLeds = doc["settings"]["cylon"];
 
   savedSSID = (String) ssid;
   savedPass = (String) pass;

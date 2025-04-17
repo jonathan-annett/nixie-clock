@@ -8,7 +8,7 @@
      "ntp-server" :  "pool.ntp.org",
      "tz-offset" : 36000,
      "daylight-offset": 0,
-     "useLeds":false
+     "cylon":false
    }
  }
  
